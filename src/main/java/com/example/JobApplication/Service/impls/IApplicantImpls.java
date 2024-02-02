@@ -26,6 +26,12 @@ public class IApplicantImpls implements IApplicantService {
 
     @Autowired
     private CertificationRepository certificationRepository;
+    
+    @Autowired
+    private JobPostingRepository jobPostingRepository;
+
+    @Autowired
+    private JobAppRepository jobAppRepository;
 
     public void saveWorkExperience(int applicantId, WorkExperience workExperience) {
         Optional<Applicant> applicantOptional = applicantRepository.findById(applicantId);
@@ -237,6 +243,36 @@ public class IApplicantImpls implements IApplicantService {
             }
         } else {
             throw new EntityNotFoundException("Applicant not found with ID: " + applicantId);
+        }
+    }
+
+     @Override
+    public void applyForJob(int jobPostingId, List<Applicant> applicants) {
+        Optional<JobPosting> jobPostingOptional = jobPostingRepository.findById(jobPostingId);
+
+        if (jobPostingOptional.isPresent()) {
+            JobPosting jobPosting = jobPostingOptional.get();
+
+            LocalDate currentDate = LocalDate.now();
+            List<JobApp> jobApps = new ArrayList<>();
+
+            ApplicationStatus applicationStatus = ApplicationStatus.APPLIED;
+
+            for (Applicant applicant : applicants) {
+                JobApp jobApp = new JobApp();
+                jobApp.setJobPosting(jobPosting);
+                jobApp.setDate(currentDate);
+                jobApp.getApplicants().add(applicant);
+
+                jobApp.setApplicationStatus(ApplicationStatus.APPLIED);
+                jobApps.add(jobApp);
+            }
+
+
+
+            // Update the existing jobPosting with the new jobApps
+            jobPosting.getJobApps().addAll(jobApps);
+            jobPostingRepository.save(jobPosting);
         }
     }
 }

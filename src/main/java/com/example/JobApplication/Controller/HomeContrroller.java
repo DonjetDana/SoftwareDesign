@@ -1,9 +1,14 @@
 package com.example.JobApplication.Controller;
 
+import com.example.JobApplication.Dto.ApplyForJobDTO;
+import com.example.JobApplication.Dto.CompanyDto;
 import com.example.JobApplication.Dto.LoginDto;
 import com.example.JobApplication.Dto.UserDto;
-import com.example.JobApplication.Service.IApplicantService;
-import com.example.JobApplication.Service.JobAppService;
+import com.example.JobApplication.Repository.ApplicantRepository;
+import com.example.JobApplication.Repository.JobPostingRepository;
+import com.example.JobApplication.Service.Implementation.ApplicantService;
+import com.example.JobApplication.Service.Implementation.AuthenticateService;
+import com.example.JobApplication.Service.Implementation.JobAppService;
 import com.example.JobApplication.model.*;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @CrossOrigin("*")
 @RestController
@@ -20,23 +27,44 @@ import java.util.List;
 public class HomeContrroller {
 
     @Autowired
-    private IApplicantService applicantService;
-
-    @Autowired
     private JobAppService jobAppService;
 
-    public HomeContrroller(IApplicantService applicantService) {
-        this.applicantService = applicantService;
-    }
+    @Autowired
+    private ApplicantService applicantService;
+
+    @Autowired
+    private AuthenticateService authenticateService;
+
+    @Autowired
+    private JobPostingRepository jobPostingRepository;
+
+    @Autowired
+    private ApplicantRepository applicantRepository;
 
     @PostMapping("/saveuser")
-    public void saveUser(@RequestBody UserDto user ){
-        jobAppService.saveUser(user.getUsername(),user.getPassword());
+    public void saveUser(@RequestBody User user) {
+        authenticateService.saveUser(user.getUsername(), user.getPassword());
     }
 
     @PostMapping("/login")
-    public LoginDto loginUser(@RequestBody UserDto userDto) throws IOException {
-       return  jobAppService.loginUser(userDto);
+    public LoginDto loginUser(@RequestBody User userDto) throws IOException {
+        return authenticateService.loginUser(userDto);
+    }
+
+
+    @PostMapping("/savecompany")
+    public Company saveCompany(@RequestBody CompanyDto companyDto) throws IOException {
+        return jobAppService.saveCompany(companyDto);
+    }
+
+    @PostMapping("/savejob/{employer_id}")
+    public JobPosting saveJob(@PathVariable int employer_id, @RequestBody List<JobPosting> jobPostings) throws IOException {
+        return jobAppService.saveJob(employer_id, jobPostings);
+    }
+
+    @PostMapping("/applyToJob/{jobposting_id}")
+    public void applyForJob(@PathVariable int jobposting_id, @RequestBody List<Applicant> applicants) {
+        applicantService.applyForJob(jobposting_id, applicants);
     }
 
     @PostMapping("/saveworkexperience/{applicantId}")
